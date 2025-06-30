@@ -12,7 +12,7 @@ app = FastAPI()
 @validate
 async def read_root(request: Request, response: Response):
     return {
-        "version": "0.0.0"
+        "version": "0.0.1"
         , "user": f"{request.state.firstname} {request.state.lastname} ( {request.state.email} ) "
     }
 
