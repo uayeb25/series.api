@@ -77,6 +77,7 @@ async def login_user_firebase(user: UserLogin):
                     , firstname
                     , lastname
                     , active
+                    , [admin]
                 from [series].[users]
                 where email = ?
                 """
@@ -90,7 +91,8 @@ async def login_user_firebase(user: UserLogin):
                 result_dict[0]["firstname"],
                 result_dict[0]["lastname"],
                 user.email,
-                result_dict[0]["active"]
+                result_dict[0]["active"],
+                result_dict[0]["admin"],
             )
         }
     except Exception as e:
