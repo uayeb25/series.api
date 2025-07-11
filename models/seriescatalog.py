@@ -3,8 +3,10 @@ from typing import Optional
 
 
 class SeriesCatalog(BaseModel):
-    id: int = Field(
-        ge=1
+    id: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Auto-generated ID, optional for input"
     )
 
     name: Optional['str'] = Field(

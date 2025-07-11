@@ -6,25 +6,20 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
 from controllers.firebase import register_user_firebase, login_user_firebase
-from controllers.seriescatalog import get_series_catalog
+from controllers.seriescatalog import get_series_catalog, create_serie
 
 from models.userregister import UserRegister
 from models.userlogin import UserLogin
 from models.seriescatalog import SeriesCatalog
 
-from utils.security import validate
-from utils.telemetry import setup_simple_telemetry
+from utils.security import validateadmin
+from utils.telemetry import setup_simple_telemetry, instrument_fastapi_app
 
 logging.basicConfig( level=logging.INFO )
 logger = logging.getLogger(__name__)
 load_dotenv()
 
 telemetry_enabled = setup_simple_telemetry()
-if telemetry_enabled:
-    logger.info("Application Insights enabled")
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-else:
-    logger.warning("Application Insight disabled")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,9 +35,11 @@ app = FastAPI(
 )
 
 if telemetry_enabled:
-    FastAPIInstrumentor.instrument_app(app)
-    logger.info("FastAPI Instrummented")
-
+    instrument_fastapi_app(app)
+    logger.info("Application Insights enabled")
+    logger.info("FastAPI Instrumented")
+else:
+    logger.warning("Application Insight disabled")
 
 @app.get("/health")
 async def health_check():
@@ -72,9 +69,15 @@ async def login(user: UserLogin):
 
 @app.get("/series")
 async def get_series() -> list[SeriesCatalog]:
+    """Get all series from the catalog"""
     series: list[SeriesCatalog] = await get_series_catalog()
     return series
 
+@app.post("/series", response_model=SeriesCatalog, status_code=201)
+@validateadmin
+async def create_new_series(request: Request, response: Response, series_data: SeriesCatalog) -> SeriesCatalog:
+    cs = await create_serie(series_data)
+    return cs
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
